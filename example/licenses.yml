@@ -43,3 +43,27 @@
   name: Picasso
   copyrightHolder: Square, Inc.
   license: apache2
+
+- artifact: com.instabug.library:instabug:+
+  name: Instabug Core Library
+  copyrightHolder: Instabug, Inc
+  license: Proprietary
+  licenseUrl: https://instabug.com/terms
+  url: https://instabug.com
+- artifact: com.madgag.spongycastle:+:+
+  name: Spongy Castle
+  license: bouncy
+  copyrightHolder: The Legion of the Bouncy Castle Inc. (http://www.bouncycastle.org)
+  licenseUrl: http://www.bouncycastle.org/licence.html
+  url: http://rtyley.github.io/spongycastle/
+- artifact: com.squareup.mimecraft:mimecraft:+
+  skip: true
+  name: Mime Craft
+  url: http://github.com/square/mimecraft/
+- artifact: org.jcodec:jcodec-android:+
+  skip: true
+  url: http://jcodec.org
+- artifact: org.jcodec:jcodec:+
+  skip: true
+  url: http://jcodec.org
+
