@@ -118,6 +118,11 @@ public class LibraryInfo implements Comparable<LibraryInfo> {
                 return "epl1"
             case ~/(?i).*\bfacebook\b.*\bplatform\b.*\blicense\b.*/:
                 return "facebook_platform_license"
+            case ~/(?i).*\bbouncy\b.*/:
+            case ~/(?i).*\bbouncy\b.*\bcastle\b.*\blicense\b.*/:
+                return "bouncy_castle_license"
+            case ~/(?i).*\bproprietary\b.*/:
+                return "proprietary"
             default:
                 return name
         }

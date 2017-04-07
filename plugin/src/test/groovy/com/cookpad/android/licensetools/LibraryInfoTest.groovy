@@ -111,6 +111,8 @@ public class LibraryInfoTest {
         assertNotEquals("facebook_platform_license", normalizeLicense("BSD"))
         assertNotEquals("facebook_platform_license", normalizeLicense("MIT"))
 
+        assertEquals("bouncy_castle_license", normalizeLicense("Bouncy Castle Licence"))
+
         // Other
         assertEquals("Other", normalizeLicense("Other"))
         assertEquals("No license found", normalizeLicense("No license found"))
