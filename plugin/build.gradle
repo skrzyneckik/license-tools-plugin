@@ -31,7 +31,6 @@ final ARTIFACT_ID = "license-tools-plugin"
 
 // for "plugin:install"
 group = metadata.groupId
-jar.baseName = ARTIFACT_ID
 version = metadata.version
 
 dependencies {
@@ -44,6 +43,13 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: uri('repo'))
+        }
+    }
+}
 
 publish {
     artifactId = ARTIFACT_ID

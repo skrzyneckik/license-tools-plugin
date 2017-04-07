@@ -1,3 +1,13 @@
+buildscript {
+    repositories {
+        maven {
+            url uri('/plugin/repo')
+        }
+    }
+    dependencies {
+        'com.cookpad.android.licensetools:plugin:0.21.1-CUSTOM'
+    }
+}
 apply plugin: 'com.android.application'
 apply plugin: 'com.cookpad.android.licensetools'
 apply plugin: 'com.neenbedankt.android-apt'
