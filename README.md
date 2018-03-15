@@ -17,7 +17,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.cookpad.android.licensetools:license-tools-plugin:0.21.1'
+        classpath 'com.cookpad.android.licensetools:license-tools-plugin:1.2.0'
     }
 }
 
@@ -76,6 +76,27 @@ This plugin does not provide `Activity` nor `Fragment` to show `licenses.html`. 
 
 `example/MainActivity` is an example.
 
+### Configuring the plugin
+
+Use `licenseTools` in your build.gradle to add some optional configuration.
+
+For example:
+```
+licenseTools {
+    outputHtml = "licenses_output.html"
+}
+```
+
+Available configuration fields:
+
+| Field name      | Default value      | Description   | 
+| -------------   | -------------      | ------------- |
+| `licensesYaml`  | `"licenses.yml"`   | The name of the licenses yml file                                                                         |
+| `outputHtml`    | `"licenses.html"`  | The file name of the output of the `generateLicensePage` task                                             |
+| `outputJson`    | `"licenses.json"`  | The file name of the output of the `generateLicenseJson` task                                             |
+| `ignoredGroups` | `[]` (empty array) | An array of group names the plugin will ignore (useful for internal dependencies with missing .pom files) |
+| `ignoredProjects` | `[]` (empty array) | An array of project names the plugin will ignore (To ignore particular internal projects like custom lint) |
+
 ## DataSet Format
 
 ### Required Fields
@@ -88,6 +109,8 @@ This plugin does not provide `Activity` nor `Fragment` to show `licenses.html`. 
 
 * `year` to indicate copyright years
 * `skip` to skip generating license entries (for proprietary libraries)
+* `forceGenerate` to force generate the output with arbitrary items. (Read [this issue](Feature Request: feature for adding/changing licenses by hand #78) for more details.)
+    - If some `pom` data is wrong, you can override some of them using this flag.
 
 ### Example
 
@@ -116,19 +139,58 @@ This plugin does not provide `Activity` nor `Fragment` to show `licenses.html`. 
     Copyright (c) 2015 FUJI Goro (gfx)
     SQLite.g4 is: Copyright (c) 2014 by Bart Kiers
   license: apache_2
-- artifact: io.reactivex:rxandroid:1.1.0
+- artifact: io.reactivex:rxandroid:1.2.0
   name: RxAndroid
   copyrightHolder: The RxAndroid authors
   license: apache2
 - artifact: license-tools-plugin:example-dep:+
   skip: true
+- name: OpenCV
+  copyrightHolder: OpenCV team
+  license: bsd_3_clauses
+  url: "https://opencv.org/"
+  forceGenerate: true
 ```
+
+## Notice
+### For Gradle Plugin 3 users
+- If you'd like to use `project` like the following, don't forget to set `configuration: 'default'`
+    - https://stackoverflow.com/questions/45679847/android-studio-3-0-compile-issue-cannot-choose-between-configurations
+
+```gradle
+dependencies {
+    implementation project(path: ':example-dep', configuration: 'default')
+}
+```
+
+- If your project's dependencies break with `configuration: 'default'`, you can switch which `implementation project()` call like the following control flow.
+
+```gradle
+dependencies {
+    if(project.gradle.startParameter.taskNames.contains("checkLicenses")) {
+        implementation project(path: ':example-dep', configuration: 'default')
+    } else {
+        implementation project(path: ':example-dep')
+    }
+}
+```
+
+You can also define method like `implementation_project` in `example/build.gradle` to reduce some boilerplate code.
 
 ## See Also
 
 - [オープンソースライセンスの管理を楽にする -Android アプリ編 - クックパッド開発者ブログ](http://techlife.cookpad.com/entry/2016/04/28/183000)
 
 ## For Developers
+### Make sure after you change codebase
+
+Run the following Gradle tasks and app commands succeed:
+
+```sh
+./gradlew checkLicenses
+./gradlew generateLicensePage
+./gradlew generateLicenseJson
+```
 
 ### Release Engineering
 

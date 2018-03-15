@@ -8,9 +8,9 @@ public class LibraryInfo implements Comparable<LibraryInfo> {
 
     String filename = ""
 
-    String year = "";
+    String year = ""
 
-    String copyrightHolder = "";
+    String copyrightHolder = ""
 
     String notice = ""
 
@@ -18,9 +18,11 @@ public class LibraryInfo implements Comparable<LibraryInfo> {
 
     String licenseUrl = ""
 
-    String url = "";
+    String url = ""
 
     boolean skip = false
+
+    boolean forceGenerate = false
 
     // from libraries.yml
     public static LibraryInfo fromYaml(Object lib) {
@@ -43,6 +45,7 @@ public class LibraryInfo implements Comparable<LibraryInfo> {
         libraryInfo.notice = lib.notice as String
         libraryInfo.skip = lib.skip as boolean
         libraryInfo.url = lib.url as String
+        libraryInfo.forceGenerate = lib.forceGenerate as boolean
         return libraryInfo
     }
 
@@ -60,6 +63,10 @@ public class LibraryInfo implements Comparable<LibraryInfo> {
 
     public String getName() {
         return libraryName ?: getNameFromArtifactId() ?: filename
+    }
+
+    public String getEscapedName() {
+        return name.contains(": ") ? "\"${name}\"" : name
     }
 
     private String getId() {
@@ -92,6 +99,10 @@ public class LibraryInfo implements Comparable<LibraryInfo> {
 
     static String normalizeLicense(String name) {
         switch (name) {
+            case ~/(?i).*\bapache.*1\.0.*/:
+                return "apache1_0"
+            case ~/(?i).*\bapache.*1.*/:
+                return "apache1_1"
             case ~/(?i).*\bapache.*2.*/:
                 return "apache2"
             case ~/(?i).*\bmit\b.*/:
@@ -100,22 +111,34 @@ public class LibraryInfo implements Comparable<LibraryInfo> {
             case ~/(?i).*\bsimplified\b.*\bbsd\b.*/:
                 return "bsd_2_clauses"
             case ~/(?i).*\bbsd\b.*\b3\b.*/:
+            case ~/(?i).*\brevised\b.*\bbsd\b.*/:
+            case ~/(?i).*\bmodified\b.*\bbsd\b.*/:
                 return "bsd_3_clauses"
             case ~/(?i).*\bbsd\b.*\b4\b.*/:
-                return "bsd_4_clauses" // not supported because it is a very legacy license
+            case ~/(?i).*\boriginal\b.*\bbsd\b.*/:
+                return "bsd_4_clauses"
             case ~/(?i).*\bbsd\b.*/:
                 return "bsd_3_clauses"
             case ~/(?i).*\bisc\b.*/:
                 return "isc"
+            case ~/(?i).*\bmozilla\b.*\bpublic\b.*\b1\.0\b.*/:
+            case ~/(?i).*\bmpl\b?.*\b?1\.0\b.*/:
+                return "mpl1_0"
             case ~/(?i).*\bmozilla\b.*\bpublic\b.*\b1\b.*/:
-            case ~/(?i).*\bmpl\b.*\b1\b.*/:
-                return "mpl1"
+            case ~/(?i).*\bmpl\b?.*\b?1\b.*/:
+                return "mpl1_1"
             case ~/(?i).*\bmozilla\b.*\bpublic\b.*\b2\b.*/:
-            case ~/(?i).*\bmpl\b.*\b2\b.*/:
+            case ~/(?i).*\bmpl\b?.*\b?2\b.*/:
                 return "mpl2"
+            case ~/(?i).*\bcommon\b.*\bpublic\b.*/:
+            case ~/(?i).*\bcpl\b.*/:
+                return "cpl1"
             case ~/(?i).*\beclipse\b.*\bpublic\b.*\b1\b.*/:
             case ~/(?i).*\bepl\b.*\b1\b.*/:
                 return "epl1"
+            case ~/(?i).*\bfree\b.*\bpublic\b.*/:
+            case ~/(?i).*\bfpl\b.*/:
+                return "fpl1"
             case ~/(?i).*\bfacebook\b.*\bplatform\b.*\blicense\b.*/:
                 return "facebook_platform_license"
             case ~/(?i).*\bbouncy\b.*/:
@@ -123,6 +146,31 @@ public class LibraryInfo implements Comparable<LibraryInfo> {
                 return "bouncy_castle_license"
             case ~/(?i).*\bproprietary\b.*/:
                 return "proprietary"
+            case ~/(?i).*\bcc0\b.*/:
+            case ~/(?i).*\bcreative\b.commons\b.*\b.*/:
+                return "cc0"
+            case ~/(?i).*\bcommon\b.*\bdevelopment\b.*\bdistribution\b.*/:
+            case ~/(?i).*\bcddl\b.*/:
+                return "cddl1"
+            case ~/(?i).*\bgnu\b.*\blesser\b.*\bgeneral\b.*\bpublic\b.*2.*/:
+            case ~/(?i).*\blgpl\b?.*2.*/:
+                return "lgpl2_1"
+            case ~/(?i).*\bgnu\b.*\blesser\b.*\bgeneral\b.*\bpublic\b.*3.*/:
+            case ~/(?i).*\bgnu\b.*\blesser\b.*\bgeneral\b.*\bpublic\b.*/:
+            case ~/(?i).*\blgpl\b?.*3.*/:
+            case ~/(?i).*\blgpl\b.*/:
+                return "lgpl3"
+            case ~/(?i).*\bgnu\b.*\bgeneral\b.*\bpublic\b.*1.*/:
+            case ~/(?i).*\bgpl\b?.*1.*/:
+                return "gpl1"
+            case ~/(?i).*\bgnu\b.*\bgeneral\b.*\bpublic\b.*2.*/:
+            case ~/(?i).*\bgpl\b?.*2.*/:
+                return "gpl2"
+            case ~/(?i).*\bgnu\b.*\bgeneral\b.*\bpublic\b.*3.*/:
+            case ~/(?i).*\bgnu\b.*\bgeneral\b.*\bpublic\b.*/:
+            case ~/(?i).*\bgpl\b?.*3.*/:
+            case ~/(?i).*\bgpl\b.*/:
+                return "gpl3"
             default:
                 return name
         }

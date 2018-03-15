@@ -1,5 +1,6 @@
 package com.cookpad.android.licensetools
 
+import groovy.json.JsonBuilder
 import groovy.util.slurpersupport.GPathResult
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -9,7 +10,6 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.xml.sax.helpers.DefaultHandler
 import org.yaml.snakeyaml.Yaml
-import groovy.json.JsonBuilder
 
 class LicenseToolsPlugin implements Plugin<Project> {
 
@@ -41,7 +41,7 @@ class LicenseToolsPlugin implements Plugin<Project> {
                 notDocumented.each { libraryInfo ->
                     def message = new StringBuffer()
                     message.append("- artifact: ${libraryInfo.artifactId.withWildcardVersion()}\n")
-                    message.append("  name: ${libraryInfo.name ?: "#NAME#"}\n")
+                    message.append("  name: ${libraryInfo.escapedName ?: "#NAME#"}\n")
                     message.append("  copyrightHolder: ${libraryInfo.copyrightHolder ?: "#COPYRIGHT_HOLDER#"}\n")
                     message.append("  license: ${libraryInfo.license ?: "#LICENSE#"}\n")
                     if (libraryInfo.licenseUrl) {
@@ -91,7 +91,7 @@ class LicenseToolsPlugin implements Plugin<Project> {
     void initialize(Project project) {
         LicenseToolsExtension ext = project.extensions.findByType(LicenseToolsExtension)
         loadLibrariesYaml(project.file(ext.licensesYaml))
-        loadDependencyLicenses(project)
+        loadDependencyLicenses(project, ext.ignoredGroups, ext.ignoredProjects)
     }
 
     void loadLibrariesYaml(File licensesYaml) {
@@ -106,9 +106,12 @@ class LicenseToolsPlugin implements Plugin<Project> {
         }
     }
 
-    void loadDependencyLicenses(Project project) {
-        resolveProjectDependencies(project).each { d ->
+    void loadDependencyLicenses(Project project, Set<String> ignoredGroups, Set<String> ignoredProjects) {
+        resolveProjectDependencies(project, ignoredProjects).each { d ->
             if (d.moduleVersion.id.version == "unspecified") {
+                return
+            }
+            if (ignoredGroups.contains(d.moduleVersion.id.group)) {
                 return
             }
 
@@ -169,12 +172,12 @@ class LicenseToolsPlugin implements Plugin<Project> {
 
             // merge dependencyLicenses's libraryInfo into librariesYaml's
             def o = dependencyLicenses.find(libraryInfo.artifactId)
-            if (!libraryInfo.license) {
-                libraryInfo.license = o.license
+            if (o) {
+                libraryInfo.license = libraryInfo.license ?: o.license
+                libraryInfo.filename = o.filename
+                libraryInfo.artifactId = o.artifactId
+                libraryInfo.url = libraryInfo.url ?: o.url
             }
-            libraryInfo.filename = o.filename
-            libraryInfo.artifactId = o.artifactId
-            libraryInfo.url = o.url.isEmpty() ? libraryInfo.url ?: "" : o.url
             try {
                 content.append(Templates.buildLicenseHtml(libraryInfo));
             } catch (NotEnoughInformationException e) {
@@ -208,12 +211,12 @@ class LicenseToolsPlugin implements Plugin<Project> {
 
             // merge dependencyLicenses's libraryInfo into librariesYaml's
             def o = dependencyLicenses.find(libraryInfo.artifactId)
-            if (!libraryInfo.license) {
-                libraryInfo.license = o.license
+            if (o) {
+                libraryInfo.license = libraryInfo.license ?: o.license
+                // libraryInfo.filename = o.filename
+                libraryInfo.artifactId = o.artifactId
+                libraryInfo.url = libraryInfo.url ?: o.url
             }
-            // libraryInfo.filename = o.filename
-            libraryInfo.artifactId = o.artifactId
-            libraryInfo.url = o.url.isEmpty() ? libraryInfo.url ?: "" : o.url
             try {
                 Templates.assertLicenseAndStatement(libraryInfo)
                 librariesArray << libraryInfo
@@ -277,14 +280,28 @@ class LicenseToolsPlugin implements Plugin<Project> {
     }
 
     // originated from https://github.com/hierynomus/license-gradle-plugin DependencyResolver.groovy
-    Set<ResolvedArtifact> resolveProjectDependencies(Project project) {
-        def subprojects = project.rootProject.subprojects.groupBy { Project p -> "$p.group:$p.name:$p.version" }
+    Set<ResolvedArtifact> resolveProjectDependencies(Project project, Set<String> ignoredProjects) {
+        def subprojects = project.rootProject.subprojects.findAll { Project p -> !ignoredProjects.contains(p.name) }
+                .groupBy { Project p -> "$p.group:$p.name:$p.version" }
 
-        List<ResolvedArtifact> runtimeDependencies = project.configurations.all.findAll { Configuration c ->
-            c.name.matches(/^(?:release\w*)?[cC]ompile$/) // compile, releaseCompile, releaseProductionCompile, and so on.
-        }.collect {
-            it.resolvedConfiguration.resolvedArtifacts
-        }.flatten() as List<ResolvedArtifact>
+        List<ResolvedArtifact> runtimeDependencies = []
+
+        project.rootProject.subprojects.findAll { Project p -> !ignoredProjects.contains(p.name) }.each { Project subproject ->
+            runtimeDependencies << subproject.configurations.all.findAll { Configuration c ->
+                // compile|implementation|api, release(Compile|Implementation|Api), releaseProduction(Compile|Implementation|Api), and so on.
+                c.name.matches(/^(?:release\w*)?([cC]ompile|[cC]ompileOnly|[iI]mplementation|[aA]pi)$/)
+            }.collect {
+                Configuration copyConfiguration = it.copyRecursive()
+                if (copyConfiguration.metaClass.respondsTo(copyConfiguration, "setCanBeResolved", Boolean)) {
+                    copyConfiguration.setCanBeResolved(true)
+                }
+
+                copyConfiguration.resolvedConfiguration.resolvedArtifacts
+            }.flatten() as List<ResolvedArtifact>
+        }
+
+        runtimeDependencies = runtimeDependencies.flatten()
+        runtimeDependencies.removeAll([null])
 
         def seen = new HashSet<String>()
         def dependenciesToHandle = new HashSet<ResolvedArtifact>()
@@ -299,7 +316,6 @@ class LicenseToolsPlugin implements Plugin<Project> {
                 }
             }
         }
-
         return dependenciesToHandle
     }
 }

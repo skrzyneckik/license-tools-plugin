@@ -1,5 +1,36 @@
 # Revision History of license-tools-plugin
 
+## v1.2.0
+- [feature for adding/changing licenses by hand](https://github.com/cookpad/license-tools-plugin/issues/78)
+    - You can add licenses by manual
+
+## v1.1.0
+- [add to ignore resolving dependencies](https://github.com/cookpad/license-tools-plugin/pull/75)
+
+## v1.0.0
+- [fix resolving dependencies for project](https://github.com/cookpad/license-tools-plugin/pull/69)
+- [add a notice section to mention about `configuration`](https://github.com/cookpad/license-tools-plugin/pull/70)
+
+## v0.24.0
+- [Place an expand/collapse button at each license document](https://github.com/cookpad/license-tools-plugin/pull/50)
+- [Support local Jar libraries and override incorrect pom.xml](https://github.com/cookpad/license-tools-plugin/pull/56)
+- [Generate licenses.html with the same library order in licenses.yml](https://github.com/cookpad/license-tools-plugin/pull/52)
+- [Improve that did not fail on :checkLicense](https://github.com/cookpad/license-tools-plugin/pull/62)
+- [Escape colon with space (: ) in library name as it is invalid in YAML format](https://github.com/cookpad/license-tools-plugin/pull/59)
+- [Fix README](https://github.com/cookpad/license-tools-plugin/pull/64)
+- [Support more major OSS licenses](https://github.com/cookpad/license-tools-plugin/pull/61)
+
+## v0.23.0
+- [Support CC0 1.0 license](https://github.com/cookpad/license-tools-plugin/pull/45)
+
+## v0.22.0
+- [Added ability to completely ignore certain groups](https://github.com/cookpad/license-tools-plugin/issues/47)
+- [Support android gradle plugin 3.0+](https://github.com/cookpad/license-tools-plugin/issues/46)
+- [Update build tools and dependencies](https://github.com/cookpad/license-tools-plugin/issues/43)
+
+## v0.21.1
+- [Update facebook platform license template](https://github.com/cookpad/license-tools-plugin/pull/42)
+
 ## v0.21.0
 - [Support Facebook Platform License](https://github.com/cookpad/license-tools-plugin/issues/40)
 
